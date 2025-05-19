@@ -33,11 +33,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setResults }) => {
   const analyzeImage = async (imageFile: File) => {
     setLoading(true);
     setError(null);
-    
+  
     try {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY as string);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-
+  
       const base64Image = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -50,7 +50,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setResults }) => {
         reader.onerror = error => reject(error);
         reader.readAsDataURL(imageFile);
       });
-
+  
       const imageParts = [
         {
           inlineData: {
@@ -59,25 +59,28 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setResults }) => {
           }
         }
       ];
-
+  
       const result = await model.generateContent([
         "Analyze this e-waste image and provide the following information:\n" +
         "1. Identified components\n" +
         "2. Whether it's recyclable or not\n" +
         "3. Recommendation for disposal or recycling\n" +
-        "Format the response as a JSON object with keys: 'categories' (array of objects with 'name' and 'confidence'), 'recyclable' (boolean), and 'recommendation' (string).",
+        "Format the response as a JSON object with keys: 'categories' (array of objects with 'name' and 'confidence in percentage(number)'), 'recyclable' (boolean), and 'recommendation' (string).",
         ...imageParts
       ]);
   
       const response = await result.response;
-      const responseText = response.text();
-
+      let responseText = await response.text();
+  
       console.log("Raw AI response:", responseText);
+  
+      // Attempt to clean the response text
+      responseText = responseText.replace(/```json|```/g, '').trim();
   
       let data;
       try {
         data = JSON.parse(responseText);
-        
+  
         if (!data.categories || !Array.isArray(data.categories) || 
             typeof data.recyclable !== 'boolean' || 
             typeof data.recommendation !== 'string') {
@@ -97,7 +100,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setResults }) => {
         recyclable: typeof data.recyclable === 'boolean' ? data.recyclable : null,
         recommendation: typeof data.recommendation === 'string' ? data.recommendation : 'No recommendation provided.'
       };
-
+  
       setResults(sanitizedData);
       navigate('/results');
     } catch (error) {

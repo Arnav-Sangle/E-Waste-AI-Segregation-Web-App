@@ -129,7 +129,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ results }) => {
                 <span className="flex-grow">{category.name}</span>
                 {category.confidence !== undefined && (
                   <span className="text-sm text-gray-600">
-                    Confidence: {(category.confidence * 100).toFixed(2)}%
+                    {/* Confidence: {(category.confidence * 100).toFixed(2)}% */}
+                    Confidence: {(category.confidence).toFixed(2)}%
                   </span>
                 )}
               </motion.li>
